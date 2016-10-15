@@ -3,6 +3,8 @@ const express = require('express');
 var app = express();
 mongoose.connect('mongodb://doug:123@ds019796.mlab.com:19796/doug');
 
+var port = process.env.PORT || 8080;
+
 var db = mongoose.connection;
 db.on('error', (err) => {console.error(err)});
 
@@ -40,4 +42,4 @@ app.get('/api/gets', function (req, res, next) {
     });
 });
 
-app.listen();
+app.listen(port);
