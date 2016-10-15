@@ -32,12 +32,14 @@ function fnSave(err, obj) {
     console.log(obj);
 };
 
+app.use(express.static('dist'));
+
 app.get('/api/gets', function (req, res, next) {
     User.findOne(function(err, obj) {
         if(err) return console.error(err);
         console.log(obj);
-        //var x = JSON.stringify(obj);
-        res.send(obj);
+        var x = JSON.stringify(obj);
+        res.json(x);
         next();
     });
 });
