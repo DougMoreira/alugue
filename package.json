@@ -1,0 +1,31 @@
+{
+  "name": "alugue-server",
+  "version": "0.0.1",
+  "description": "server-side of Alugue um Guia Amigo",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DougMoreira/alugueServer.git"
+  },
+  "keywords": [
+    "alugue",
+    "server",
+    "node.js",
+    "express",
+    "mongodb",
+    "mongoose"
+  ],
+  "author": "Douglas M. Barcellos",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DougMoreira/alugueServer/issues"
+  },
+  "homepage": "https://github.com/DougMoreira/alugueServer#readme",
+  "dependencies": {
+    "express": "^4.14.0",
+    "mongoose": "^4.6.3"
+  }
+}
