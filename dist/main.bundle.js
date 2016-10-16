@@ -40306,7 +40306,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 
 var HttpUtilService = (function () {
     function HttpUtilService() {
-        this.API_URL = 'http://localhost:8080/';
+        this.API_URL = 'https://guire.herokuapp.com/';
     }
     HttpUtilService.prototype.url = function (path) {
         return this.API_URL + path;
