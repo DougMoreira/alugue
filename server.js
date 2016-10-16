@@ -56,7 +56,7 @@ function facebookConfig(server) {
 		{
 			clientID: '568097623392176'
 			, clientSecret: 'b748f5d7b28ae46804e8bbe2b8a3ff95'
-			, callbackURL: 'https://guide.herokuapp.com/auth/facebook/callback'
+			, callbackURL: 'https://guire.herokuapp.com/auth/facebook/callback'
 		}
 		, function(accessToken, refreshToken, profile, done) {
 			process.nextTick(function() {
