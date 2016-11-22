@@ -7,8 +7,8 @@ module.exports = function(passport) {
 		{
 			clientID: '568097623392176'
 			, clientSecret: 'b748f5d7b28ae46804e8bbe2b8a3ff95'
-			// , callbackURL: 'http://localhost:8080/login/facebook/callback'
-			, callbackURL: 'https://guire.herokuapp.com/login/facebook/callback'
+			, callbackURL: 'http://teste.com.zz/login/facebook/callback'
+			// , callbackURL: 'https://guire.herokuapp.com/login/facebook/callback'
 			, profileFields: ['id', 'displayName', 'email', 'first_name', 'last_name', 'picture.type(large)']
 		}
 		, fnToken

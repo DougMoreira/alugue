@@ -1,8 +1,8 @@
 'use strict';
 var express = require('express');
-var User = require('../models/user');
-var fileController     = require('../controllers/file_controller.js');
-
+var UserCtrl = require('../controllers/user_controller');
+var EstadoCtrl = require('../controllers/estado_controller');
+var fileController = require('../controllers/file_controller.js');
 
 var router = express.Router();
 
@@ -13,27 +13,20 @@ var isAuthenticated = function (req, res, next) {
     /* A FAZER >>>> Mensagem de erro caso não esteja autenticado */
 };
 
-/* Atualiza o status de newUser para false no banco de dados */
-function updateNewUser(id) {
-	User.update({"id": id}, {$set: {"newUser": false}}, function(err) {
-		if(err)
-			console.error(err);
-	});
-}
-
-/* Valida se todos os campos solicitados existem */
-function fieldsValidator(user, fields) {
-	var notFound = '';
-	for(let i = 0;i < fields.length; i++) {
-		if(!user[fields[i]]){
-			notFound += '[' + fields[i] + '] ';
-			delete fields[i];
+/* Monta os erros */
+function errorHandler(errorType, err) {
+	console.error(err);
+	let errorObjectSend = {
+		error: {
+			type: errorType
+			, message: err.message
 		}
-	}
-	return { invalid: notFound, valid: fields };
-}
+	};
 
-module.exports = function(passport, gfs){
+	return errorObjectSend;
+};
+
+module.exports = function(passport, gfs) {
 
 	/* GET - Página principal */
 	router.get('/', function(req, res) {
@@ -54,10 +47,10 @@ module.exports = function(passport, gfs){
     );
 
 	/* GET - Home Page */
-	router.get('/home', function(req, res){
-		console.log(req.user);
-		res.send('Página Inicial usuário | isLogged: ' + req.isAuthenticated());
-	});
+	// router.get('/home', function(req, res){
+	// 	console.log(req.user);
+	// 	res.send('Página Inicial usuário | isLogged: ' + req.isAuthenticated());
+	// });
 
 	/* GET - Realiza o logout do usuário */
 	router.get('/logout', isAuthenticated, function(req, res) {
@@ -73,67 +66,70 @@ module.exports = function(passport, gfs){
 
 	/* GET - As informações básicas são requisitadas nesta rota  */
 	router.get('/api/user/info', isAuthenticated, function(req, res) {
-		User.findOne({ 'id': req.user }, function(err, user) {
-			if (err) res.redirect('/');
-			if (user) {
-				let userInfo = {
-					"id": user.id
-					, "displayName": user.displayName
-					, "name": user.firstName
-					, "lastName": user.lastName
-					, "linkPicture": user.linkPicture
-					, "newUser": user.newUser
-				}
-				if(user.newUser === true) updateNewUser(req.user);
-				res.json(userInfo);
-			}
-			else {
-				res.redirect('/');
-			}
+		UserCtrl.getUser(req.user, function(err, data) {
+			if(err)       res.status(500).json(errorHandler('SEARCH_ERROR', err));
+			else if(data) res.status(200).json({ "data": data });
+			else          res.status(404).json(errorHandler('NAO_ENCONTRADO', { message: 'O usuário não foi encontrado!' }));
 		});
 	});
 
 	/* POST - Retorna informações detalhadas do usuário. A rota espera um array com os campos */
 	router.post('/api/user/info', isAuthenticated, function(req, res) {
-		User.findOne({ 'id': req.user }, function(err, user) {
-			if (err) res.redirect('/');
-			if (user) {
-				let userInfo = {
-					"id": user.id
-					, "displayName": user.displayName
-					, "name": user.firstName
-					, "lastName": user.lastName
-					, "linkPicture": user.linkPicture
-					, "newUser": user.newUser
-				}
+		if(req.body.extraFields) {
+			UserCtrl.getUserExtraFields(req.user, req.body.extraFields, function(err, data, message) {
+				if(err)					  res.status(500).json(errorHandler('SEARCH_ERROR', err));
+				else if(data && !message) res.status(200).json({ "data": data });
+				// I'M A TEAPOT - message é retornado quando há campos inválidos ou inesperados na requisição
+				else if(data && message)  res.status(418).json(errorHandler('INVALID', { message: message }));
+				else					  res.status(404).json(errorHandler('NOT_FOUND', { message: 'O usuário não foi encontrado!' }));
+			});
+		}
+		else {
+			let message = errorHandler('MISSING', { message: 'O atributo extraFields deve ser mandado obrigatoriamente para esta rota!' });
+			res.status(422).json(message); // 422 - Unprocessable Entity
+		}
+	});
 
-				if(req.body.extraFields) {
-					let fields = req.body.extraFields;
-					
-					if(fields.length > 0) {
-						var validation = fieldsValidator(user, fields);
-						fields = validation.valid;
-						
-						for(let i = 0;i < fields.length; i++) {
-							userInfo[fields[i]] = user[fields[i]];
-						}
-						console.log(JSON.stringify(userInfo, null, 2));
-					}
-					
-					if(!validation.invalid == '') {
-						userInfo.message = "Os atributos seguintes não foram encontrados: " + validation.invalid;
-					}
-				}
-				else {
-					userInfo.message = "O atributo extraFields deve ser mandado obrigatoriamente para esta rota";
-				}
-				res.json(userInfo);
-			}
-			else {
-				res.redirect('/');
-			}
-		});
+	/* POST - Salva dados obrigatórios do guia */
+	router.post('/api/newGuia', isAuthenticated, function(req, res) {
+		console.log(req.body)
+		if(req.body) {
+			UserCtrl.newGuia(req.user, req.body, function(err, data, message) {
+				if(err) 				 res.status(500).json(errorHandler('SEARCH_ERROR', err));
+				else if(message && !err) res.status(422).json(errorHandler('MISSING', { message: message })); // 422 - Unprocessable Entity
+				else if(data)			 res.status(200).json({ "data": data });
+				else        			 res.status(404).json(errorHandler('NOT_FOUND', { message: 'Ocorreu um problema no cadastro!' }));
+			});
+		}
+		else {
+			let message = errorHandler('MISSING', { message: 'É necessário envir uma objeto na requisição!' });
+			res.status(422).json(message); // 422 - Unprocessable Entity
+		}
 		
+	});
+
+	/* POST - Cidades do Brasil - Recebe o id do estado e retorna as cidades deste estado */
+	router.post('/api/cidades', isAuthenticated, function(req, res) {
+		if(req.body.id) {
+			EstadoCtrl.getCidades(req.body.id, function(err, data){
+				if(err)       res.status(500).json(errorHandler('SEARCH_ERROR', err));
+				else if(data) res.status(200).json({ "data": data });
+				else          res.status(404).json(errorHandler('NOT_FOUND', { message: 'Cidades não localizadas!' }));
+			});
+		}
+		else {
+			let message = errorHandler('MISSING', { message: 'É necessário enviar o código do estado para buscar as cidades!' });
+			res.status(422).json(message); // 422 - Unprocessable Entity
+		}
+	});
+
+	/* GET - Estados do Brasil - Envia a lista de estados */
+	router.get('/api/estados', isAuthenticated, function(req, res) {
+		EstadoCtrl.getEstados(function(err, data) {
+			if(err)       res.status(500).json(errorHandler('SEARCH_ERROR', err));
+			else if(data) res.status(200).json({ "data": data });
+			else          res.status(404).json(errorHandler('NOT_FOUND', { message: 'Estados não localizados!' }));
+		})
 	});
 
 	/* POST - Rota para upload de imagens */

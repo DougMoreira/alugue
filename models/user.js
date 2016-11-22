@@ -1,6 +1,20 @@
 'use strict';
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
+
+var localSchema = new Schema({
+	estadoId: Number
+	, estado: String
+	, indexCidade: String
+	, cidade: String
+});
+
+/* estadoId: id do estado que foi selecionado no cadastro
+ * estado: nome do estado
+ * indexCidade: index do array de cidades do estado
+ * cidade: nome da cidade
+ */
+
 var schema = new Schema({
 	id: Number
 	, accessToken: String
@@ -11,7 +25,8 @@ var schema = new Schema({
 	, linkPicture: String
     , typeUser: String
     , keyUser: String
-	, newUser: Boolean
+	, newUser: { type: Boolean, default: true }
+	, local: { type: localSchema, default: null }
 	, firstAccess: { type: Date, default: Date.now }
 });
 var collection = 'usuarios';
